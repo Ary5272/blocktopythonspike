@@ -4,214 +4,118 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SPIKE Blocks → Python</title>
-<meta name="description" content="Convert LEGO SPIKE Prime (SPIKE App 3) word-block projects into SPIKE 3 Python, right in your browser.">
+<meta name="description" content="Convert LEGO SPIKE Prime (SPIKE App 3) word-block projects into SPIKE 3 Python, right in your browser. See your blocks and the Python side by side.">
+<meta property="og:title" content="SPIKE Blocks → Python">
+<meta property="og:description" content="Turn SPIKE Prime block programs into SPIKE 3 Python, line by line.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23ffcd1f'/%3E%3Ccircle cx='11' cy='11' r='3.5' fill='%2300000030'/%3E%3Ccircle cx='21' cy='11' r='3.5' fill='%2300000030'/%3E%3Ccircle cx='11' cy='21' r='3.5' fill='%2300000030'/%3E%3Ccircle cx='21' cy='21' r='3.5' fill='%2300000030'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
-<style>
-  :root {
-    --bg: #f6f4ee;
-    --card: #ffffff;
-    --ink: #1c1b18;
-    --muted: #6b675d;
-    --line: #e4dfd2;
-    --accent: #ffcd1f;
-    --accent-ink: #1c1b18;
-    --blue: #2f6fe4;
-    --code-bg: #1f2229;
-    --warn-bg: #fff6d6;
-    --warn-line: #f0d77a;
-    --err-bg: #fdecec;
-    --err-ink: #a12a2a;
-    --radius: 16px;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #15161a; --card: #1d1f24; --ink: #f1efe9; --muted: #a3a097; --line: #2d3038;
-      --code-bg: #111317; --warn-bg: #2b2715; --warn-line: #5a4d1c; --err-bg: #331b1b; --err-ink: #ff9b9b;
-    }
-  }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0; background: var(--bg); color: var(--ink);
-    font: 16px/1.55 Inter, system-ui, sans-serif;
-  }
-  .wrap { max-width: 980px; margin: 0 auto; padding: 40px 16px 64px; }
-  header { display: flex; align-items: center; gap: 14px; margin-bottom: 8px; }
-  .logo {
-    width: 46px; height: 46px; border-radius: 12px; background: var(--accent);
-    display: grid; grid-template-columns: repeat(2, 12px); gap: 5px; place-content: center;
-    box-shadow: inset 0 -4px 0 rgba(0,0,0,.12);
-  }
-  .logo span { width: 12px; height: 12px; border-radius: 50%; background: rgba(0,0,0,.18); }
-  h1 { font: 700 clamp(26px, 5vw, 38px)/1.1 "Space Grotesk", sans-serif; margin: 0; letter-spacing: -.02em; }
-  h1 em { font-style: normal; color: var(--blue); }
-  .sub { color: var(--muted); margin: 6px 0 28px; max-width: 640px; }
-
-  .drop {
-    display: block; position: relative; border: 2.5px dashed var(--line); border-radius: var(--radius);
-    background: var(--card); padding: 44px 20px; text-align: center; cursor: pointer;
-    transition: border-color .15s, background .15s, transform .15s;
-  }
-  .drop:hover, .drop:focus-visible { border-color: var(--accent); outline: none; }
-  .drop.over { border-color: var(--blue); transform: scale(1.01); }
-  .drop input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
-  .drop .big { font: 700 20px "Space Grotesk", sans-serif; margin: 10px 0 4px; }
-  .drop .small { color: var(--muted); font-size: 14px; }
-  .pill {
-    display: inline-block; background: var(--accent); color: var(--accent-ink); font-weight: 600;
-    border-radius: 999px; padding: 9px 18px; margin-top: 14px; font-size: 15px;
-  }
-  .icon { width: 44px; height: 44px; color: var(--muted); }
-
-  .error { display: none; margin-top: 16px; padding: 14px 16px; border-radius: 12px; background: var(--err-bg); color: var(--err-ink); font-weight: 500; }
-
-  .result { display: none; margin-top: 28px; }
-  .bar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; margin-bottom: 10px; }
-  .bar h2 { font: 700 20px "Space Grotesk", sans-serif; margin: 0; overflow-wrap: anywhere; }
-  .actions { display: flex; gap: 8px; }
-  button {
-    font: 600 14px Inter, sans-serif; border-radius: 10px; padding: 10px 16px; cursor: pointer;
-    border: 1.5px solid var(--line); background: var(--card); color: var(--ink);
-  }
-  button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
-  button:active { transform: translateY(1px); }
-
-  .codebox { background: var(--code-bg); border-radius: var(--radius); overflow: hidden; }
-  .codebox pre { margin: 0; padding: 18px 20px; overflow: auto; max-height: 70vh; }
-  .codebox code { font: 13.5px/1.6 "JetBrains Mono", ui-monospace, monospace; background: none !important; padding: 0 !important; }
-
-  .todos { margin-top: 14px; padding: 14px 18px; border-radius: 12px; background: var(--warn-bg); border: 1px solid var(--warn-line); font-size: 14.5px; }
-  .todos b { display: block; margin-bottom: 4px; }
-  .todos ul { margin: 4px 0 0; padding-left: 20px; }
-  .ok { margin-top: 14px; color: var(--muted); font-size: 14.5px; }
-
-  details { margin-top: 36px; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 18px; }
-  summary { cursor: pointer; font-weight: 600; }
-  details p, details li { color: var(--muted); font-size: 14.5px; }
-  details code { font-family: "JetBrains Mono", monospace; font-size: 13px; color: var(--ink); }
-  footer { margin-top: 28px; color: var(--muted); font-size: 13px; text-align: center; }
-</style>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div class="wrap">
-  <header>
-    <div class="logo" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
-    <h1>SPIKE Blocks <em>→</em> Python</h1>
+  <header class="top">
+    <a class="brand" href="./">
+      <span class="logo" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+      <span>SPIKE Blocks <em>→</em> Python</span>
+    </a>
+    <span class="badge">SPIKE App 3 only</span>
   </header>
-  <p class="sub">Drop in a SPIKE Prime word-block project (<b>.llsp3</b>) and get SPIKE&nbsp;3 Python you can paste straight into a Python project in the SPIKE App. Your file never leaves your browser.</p>
 
-  <label class="drop" id="drop" tabindex="0">
-    <input type="file" id="file" accept=".llsp3,.llsp">
-    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M20 16v3a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-3"/></svg>
-    <div class="big">Drop your .llsp3 file here</div>
-    <div class="small">In the SPIKE App: ☰ menu → Save As / Download, then drop that file here</div>
-    <span class="pill">Choose file</span>
-  </label>
+  <!-- ============ start screen ============ -->
+  <section id="start">
+    <h1>Turn your SPIKE&nbsp;Prime blocks into <span class="hl-word">real Python</span>.</h1>
+    <p class="sub">Drop in a word-block project and see every block next to the SPIKE&nbsp;3 Python it becomes. Copy it, or download a Python project that opens straight in the SPIKE App. Your file never leaves your browser.</p>
 
-  <div class="error" id="error"></div>
+    <label class="drop" id="drop" tabindex="0">
+      <input type="file" id="file" accept=".llsp3,.llsp">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M20 16v3a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-3"/></svg>
+      <span class="big">Drop your .llsp3 file here</span>
+      <span class="small">In the SPIKE App: open the project → ☰ → <b>Save As / Export</b>, then drop that file here</span>
+      <span class="pill">Choose file</span>
+    </label>
+    <div class="or">
+      <span>No file handy?</span>
+      <button class="link" id="example">Try the example robot →</button>
+    </div>
+    <div class="error" id="error" role="alert"></div>
 
-  <section class="result" id="result">
-    <div class="bar">
-      <h2 id="title">program.py</h2>
+    <div class="features">
+      <div><b>Blocks ⇄ Python</b><span>Hover any block to see exactly which Python lines it turned into.</span></div>
+      <div><b>Looks like LEGO's code</b><span>Same style as the official SPIKE&nbsp;3 examples: <code>velocity=300</code>, wheel degrees, <code>runloop</code>.</span></div>
+      <div><b>Learn mode</b><span>Turn on <i>Explain</i> to put the original block above every line as a comment.</span></div>
+    </div>
+  </section>
+
+  <!-- ============ result workspace ============ -->
+  <section id="result" hidden>
+    <div class="toolbar">
+      <div class="title">
+        <button class="ghost back" id="again" title="Convert another file">←</button>
+        <div>
+          <h2 id="title">program</h2>
+          <div class="chips" id="chips"></div>
+        </div>
+      </div>
       <div class="actions">
-        <button id="download">Download .py</button>
+        <label class="switch" title="Put each block above its Python as a comment">
+          <input type="checkbox" id="explain"><span class="track"></span><span>Explain</span>
+        </label>
+        <button class="ghost" id="download">.py</button>
+        <button class="ghost" id="llsp3" title="A Python project you can open in the SPIKE App">SPIKE project</button>
         <button class="primary" id="copy">Copy code</button>
       </div>
     </div>
-    <div class="codebox"><pre><code class="language-python" id="code"></code></pre></div>
+
+    <div class="tabs" role="tablist">
+      <button role="tab" class="on" data-tab="blocks">Blocks</button>
+      <button role="tab" data-tab="code">Python</button>
+    </div>
+
+    <div class="panes" id="panes">
+      <div class="pane blocks-pane" id="blocksPane">
+        <div class="pane-head">Blocks <span class="hint">hover a block</span></div>
+        <div class="canvas" id="canvas"></div>
+      </div>
+      <div class="pane code-pane" id="codePane">
+        <div class="pane-head">SPIKE 3 Python <span class="hint">click a line to find its block</span></div>
+        <div class="code" id="code" role="region" aria-label="Python code"></div>
+      </div>
+    </div>
+
     <div id="todos"></div>
+
+    <div class="howto">
+      <h3>Run it on your hub</h3>
+      <ol>
+        <li><b>Easiest:</b> click <i>SPIKE project</i> above and open that file in the SPIKE App (☰ → Open).</li>
+        <li><b>Or paste it:</b> in the SPIKE App make a <i>New Project → Python</i>, delete the starter code, paste, and press ▶.</li>
+        <li>Speeds: a block's % becomes degrees per second (30% → <code>velocity=300</code>), the same as LEGO's own Python examples.</li>
+      </ol>
+    </div>
   </section>
 
-  <details>
+  <details class="faq">
     <summary>What gets converted?</summary>
     <ul>
-      <li><b>Events:</b> when program starts, when color is, when pressed, when distance, when button, when timer, when (condition), when I receive / broadcast, gestures, which face is up.</li>
-      <li><b>Movement:</b> set movement motors (<code>motor_pair.pair(motor_pair.PAIR_1, port.A, port.E)</code>), move / steer for cm, inches, rotations, degrees or seconds, start / stop moving, movement speed, tank moves.</li>
-      <li><b>Motors:</b> run for rotations/degrees/seconds, start, stop, set speed, go to position, relative position, power.</li>
-      <li><b>Light, sound, sensors:</b> write, images, pixels, power-button light, beeps and notes, color, reflection, distance, force, buttons, yaw/pitch/roll, timer.</li>
+      <li><b>Events:</b> when program starts, button, color, pressed, distance, timer, gestures, orientation, when (condition), broadcasts.</li>
+      <li><b>Movement:</b> movement motors (<code>motor_pair.pair(motor_pair.PAIR_1, port.C, port.D)</code>), move/steer for cm, inches, rotations, degrees or seconds, start/stop moving, tank moves, speed.</li>
+      <li><b>Motors:</b> run for rotations/degrees/seconds, start, stop, speed, go to position, relative position, power.</li>
+      <li><b>Light, sound, sensors:</b> write, images, pixels, power-button light, beeps and notes, color, reflection, distance, force, buttons, yaw/pitch/roll, gestures, timer.</li>
       <li><b>Control, operators, variables, lists and My Blocks</b> (they become <code>async def</code> functions).</li>
     </ul>
-    <p>Speeds: block % is turned into degrees/second (100% ≈ 1000°/s). Blocks with no Python version get a <code># TODO</code> comment in the code so nothing disappears silently.</p>
+    <p>Blocks with no Python version (like app sounds) get a <code># TODO</code> so nothing disappears silently. Tested against real SPIKE App project files and LEGO's own Training Camp programs.</p>
   </details>
 
-  <footer>Not affiliated with LEGO. SPIKE is a trademark of the LEGO Group.</footer>
+  <footer>Made for SPIKE Prime builders. Not affiliated with LEGO; SPIKE is a trademark of the LEGO Group.</footer>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
 <script src="converter.js"></script>
-<script>
-  const $ = (id) => document.getElementById(id);
-  const drop = $('drop'), fileInput = $('file');
-  let current = { python: '', name: 'program' };
-
-  function showError(msg) {
-    $('error').textContent = msg;
-    $('error').style.display = 'block';
-    $('result').style.display = 'none';
-  }
-
-  function esc(s) { return String(s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]); }
-
-  async function handle(file) {
-    if (!file) return;
-    $('error').style.display = 'none';
-    if (!/\.llsp3?$/i.test(file.name)) return showError('Please choose a SPIKE project file ending in .llsp3');
-    try {
-      const res = await SpikeConverter.convertFile(await file.arrayBuffer(), file.name);
-      current = res;
-      $('title').textContent = (res.name || 'program') + '.py';
-      const code = $('code');
-      code.textContent = res.python;
-      code.removeAttribute('data-highlighted');
-      if (window.hljs) hljs.highlightElement(code);
-      const t = $('todos');
-      const uniqTodos = [...new Set(res.todos)];
-      res.todos = uniqTodos;
-      const items = uniqTodos.map((x) => '<li>' + esc(x) + '</li>').join('');
-      const notes = res.notes.map((x) => '<li>' + esc(x) + '</li>').join('');
-      if (items) {
-        t.innerHTML = '<div class="todos"><b>' + res.todos.length + (res.todos.length === 1 ? ' block needs' : ' blocks need') +
-          ' a look</b>These are marked <code># TODO</code> in the code:<ul>' + items + notes + '</ul></div>';
-      } else {
-        t.innerHTML = '<p class="ok">✓ Every block was converted.' + (notes ? '<ul>' + notes + '</ul>' : '') + '</p>';
-      }
-      $('result').style.display = 'block';
-      $('result').scrollIntoView({ behavior: 'smooth', block: 'start' });
-    } catch (e) {
-      console.error(e);
-      showError(e.message || 'Something went wrong reading that file.');
-    }
-  }
-
-  fileInput.addEventListener('change', () => { handle(fileInput.files[0]); fileInput.value = ''; });
-  ['dragenter', 'dragover'].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add('over'); }));
-  ['dragleave', 'drop'].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.remove('over'); }));
-  drop.addEventListener('drop', (e) => handle(e.dataTransfer.files[0]));
-  drop.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInput.click(); } });
-
-  $('copy').addEventListener('click', async () => {
-    const btn = $('copy');
-    try { await navigator.clipboard.writeText(current.python); }
-    catch (e) {
-      const ta = document.createElement('textarea'); ta.value = current.python; document.body.appendChild(ta);
-      ta.select(); document.execCommand('copy'); ta.remove();
-    }
-    btn.textContent = 'Copied!';
-    setTimeout(() => (btn.textContent = 'Copy code'), 1500);
-  });
-
-  $('download').addEventListener('click', () => {
-    const blob = new Blob([current.python], { type: 'text/x-python' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = (current.name || 'program').replace(/[^\w\- ]+/g, '_') + '.py';
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-  });
-</script>
+<script src="example.js"></script>
+<script src="app.js"></script>
 </body>
 </html>
